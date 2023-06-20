@@ -1,0 +1,19 @@
+{
+  "name": "touchfishmessagemanagerbot",
+  "version": "1.0.0",
+  "description": "A telegram bot that automatically manages message queues and sends messages.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xjx0106/TouchFishMessageManagerBot.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/xjx0106/TouchFishMessageManagerBot/issues"
+  },
+  "homepage": "https://github.com/xjx0106/TouchFishMessageManagerBot#readme"
+}
