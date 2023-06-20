@@ -7,6 +7,4 @@ module.exports = new TelegramBot(TELEGRAM_BOT_TOKEN, {
 });
 
 /// 功能類
-require('./src/message_mamaner');
-
-
+require('./src/message_manager');
