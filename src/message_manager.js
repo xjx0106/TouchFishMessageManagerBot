@@ -4,6 +4,21 @@ const {
   saveData,
 } = require("../utils/index");
 
+module.exports = bot.onText(/\/copy/, onLoveText = async (msg) => {
+  const originTest = msg.text + "";
+  const params = originTest.replace("/copy ", "").split(" ");
+  console.log("[CopyParams]->", params);
+  if (params[0] && params[1] && params[2]) {
+
+    const chatId = params[0];
+    console.log("[chatId]->", chatId);
+    const fromChatId = params[1];
+    console.log("[fromChatId]->", fromChatId);
+    const messageId = params[2];
+    console.log("[messageId]->", messageId);
+    bot.copyMessage(chatId, fromChatId, messageId);
+  }
+})
 
 module.exports = bot.on("message", onLoveText = async (msg) => {
   const message_id = msg.message_id;
@@ -24,11 +39,10 @@ module.exports = bot.on("message", onLoveText = async (msg) => {
     chat_id: msg.chat.id,
     message_id: message_id,
     console_message_id: reply_msg_id,
-    new_caption: "",
     is_show_origin: false
   };
 
   let fullList = getData("list");
   fullList.push(obj);
-  saveData(fullList, "list");  
+  saveData(fullList, "list");
 });
