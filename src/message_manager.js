@@ -22,7 +22,7 @@ let bufferList = [];
 let msgList = [];
 
 /**
- * 處理telegram消息
+ * 處理單條telegram消息
  * @param {object} msg telegram單條消息 
  * @param {array} timeline 現已獲取的依存的時間綫 
  */
@@ -106,6 +106,10 @@ const disposeMsg = async (msg, timeline) => {
     parse_mode: 'HTML'
   });
 }
+/**
+ * 處理整個緩衝隊列，並保存到timeline.json裏
+ * @description 儅一組消息接受完了，它是先存在bufferList裏，現在要慢慢整理到msgList裏，并且再存到timeline.json裏
+ */
 const disposeBuffer = async () => {
   console.log("[disposeBuffer]->");
   const timeline = await getData('timeline');
