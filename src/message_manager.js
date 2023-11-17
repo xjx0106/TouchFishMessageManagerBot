@@ -9,7 +9,7 @@ const {
   TARGET_GROUP_ID
 } = require('../config');
 const {
-  calculateTime
+  scheduleTimeLine
 } = require('./time_manager');
 const {
   throttle,
@@ -240,4 +240,12 @@ module.exports = bot.onText(/\/m/, onLoveText = async (msg) => {
     return;
   }
   bot.sendMessage(GOD_ID, JSON.stringify(msgList));
+});
+
+module.exports = bot.onText(/\/s/, onLoveText = async (msg) => {
+  if (!checkPermission(msg)) {
+    // 無權限，不做處理
+    return;
+  }
+  scheduleTimeLine();
 });
