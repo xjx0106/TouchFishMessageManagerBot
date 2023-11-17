@@ -1,5 +1,8 @@
 const fs = require('fs');
 const bot = require('../index');
+const {
+	GOD_ID
+} = require('../config');
 
 /**
  * 保存文件
@@ -22,7 +25,23 @@ const getData = (name = "1") => {
 	return data;
 };
 
+/**
+ * 检查权限
+ * @param {object} msg 接受到的消息數據
+ * @returns {boolean} 是否有權限
+ */
+const checkPermission = (msg) => {
+	let haveAuth = false;
+	if (msg.from.id === GOD_ID && msg.chat.id === GOD_ID) {
+		haveAuth = true;
+	} else {
+		haveAuth = false;
+	}
+	return haveAuth;
+}
+
 module.exports = {
 	saveData,
 	getData,
+	checkPermission,
 };
