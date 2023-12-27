@@ -8,6 +8,7 @@
     "start": "node index.js"
   },
   "dependencies": {
+    "dayjs": "^1.11.10",
     "fs": "0.0.1-security",
     "lodash": "^4.17.21",
     "node-telegram-bot-api": "^0.59.0"

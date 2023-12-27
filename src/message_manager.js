@@ -9,9 +9,6 @@ const {
   TARGET_GROUP_ID
 } = require('../config');
 const {
-  scheduleTimeLine
-} = require('./time_manager');
-const {
   throttle,
   debounce,
   defer
@@ -102,9 +99,12 @@ const disposeMsg = async (msg, timeline) => {
     msgList.push(newMsg);
   }
   const groupWords = ` | Group id is <code>` + msg.media_group_id + `</code>`;
-  bot.sendMessage(msg.from.id, `Msg id is <code>` + message_id + `</code>` + groupWords, {
+  const res = await bot.sendMessage(msg.from.id, `Msg id is <code>` + message_id + `</code>` + groupWords, {
     parse_mode: 'HTML'
   });
+  setTimeout(() => {
+    bot.deleteMessage(GOD_ID, res.message_id);
+  }, 10000);
 }
 /**
  * 處理整個緩衝隊列，並保存到timeline.json裏
@@ -162,25 +162,38 @@ module.exports = bot.on("message", onLoveText = async (msg) => {
   disposeBufferDebounce();
 
 });
-      ]
-    }
-  });
 
-module.exports = bot.onText(/\/time/, onLoveText = async (msg) => {
-  if (!checkPermission(msg)) {
-    // 無權限，不做處理
-    bot.sendMessage(GOD_ID, "no right");
-    return;
-  }
-  const date = new Date();
-
-  const obj = {
-    1: date.getTime(), // 到毫秒
-    2: date.getTimezoneOffset(),
-  }
-  // 無權限，不做處理
-  bot.sendMessage(GOD_ID, JSON.stringify(obj));
-});
+// /**
+//  * 發送媒體組的示例
+//  */
+// module.exports = bot.onText(/\/mediagroup/, onLoveText = async (msg) => {
+//   if (!checkPermission(msg)) {
+//     // 無權限，不做處理
+//     return;
+//   }
+//   const mediaArr = [{
+//       type: 'photo',
+//       media: 'BccCaggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggwDAAMsA',
+//       caption: "描述描述描述描述描述描述描述描述描述描述描述描述",
+//       caption_entities: [{
+//         "offset": 1,
+//         "length": 2,
+//         "type": "text_link",
+//         "url": "https://www.google.com"
+//       }]
+//     },
+//     {
+//       type: 'photo',
+//       media: 'AgACgggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggAAMzBA',
+//     },
+//     {
+//       type: 'video',
+//       media: 'BAACAggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggwDAwzBA',
+//     },
+//   ];
+//   const options = {};
+//   bot.sendMediaGroup(TARGET_GROUP_ID, mediaArr, options);
+// });
 
 module.exports = bot.on("edited_message", onLoveText = async (msg) => {
   if (msg.text && msg.text.startsWith("/")) {
@@ -225,27 +238,4 @@ module.exports = bot.on("edited_message", onLoveText = async (msg) => {
     // 所修改的是純文字、單媒體消息，不做處理（因爲是用copyMessage來實現的）
     console.log("edit not group");
   }
-});
-
-module.exports = bot.onText(/\/b/, onLoveText = async (msg) => {
-  if (!checkPermission(msg)) {
-    // 無權限，不做處理
-    return;
-  }
-  bot.sendMessage(GOD_ID, JSON.stringify(bufferList));
-});
-module.exports = bot.onText(/\/m/, onLoveText = async (msg) => {
-  if (!checkPermission(msg)) {
-    // 無權限，不做處理
-    return;
-  }
-  bot.sendMessage(GOD_ID, JSON.stringify(msgList));
-});
-
-module.exports = bot.onText(/\/s/, onLoveText = async (msg) => {
-  if (!checkPermission(msg)) {
-    // 無權限，不做處理
-    return;
-  }
-  scheduleTimeLine();
 });

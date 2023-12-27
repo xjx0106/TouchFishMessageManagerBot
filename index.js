@@ -20,4 +20,7 @@ module.exports = new TelegramBot(TELEGRAM_BOT_TOKEN, config);
 
 /// 功能類
 require("./src/message_manager");
-// require("./src/callback_manager");
+require("./src/time_manager");
+require("./src/callback_manager");
+
+console.log("[Bot Started!] ^_^");
