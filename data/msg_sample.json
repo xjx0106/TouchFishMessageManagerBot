@@ -1,0 +1,405 @@
+[
+  // 單文字消息
+  {
+    "message_id": 83,
+    "from": {
+      "id": 8888888888,
+      "is_bot": false,
+      "first_name": "管",
+      "last_name": "理",
+      "username": "bestadmin",
+      "language_code": "zh-hans",
+      "is_premium": true
+    },
+    "chat": {
+      "id": 8888888888,
+      "first_name": "管",
+      "last_name": "理",
+      "username": "bestadmin",
+      "type": "private"
+    },
+    "date": 1700120813,
+    "text": "這是文字消息内容"
+  },
+  // 單video
+  {
+    "message_id": 85,
+    "from": {
+      "id": 8888888888,
+      "is_bot": false,
+      "first_name": "管",
+      "last_name": "理",
+      "username": "bestadmin",
+      "language_code": "zh-hans",
+      "is_premium": true
+    },
+    "chat": {
+      "id": 8888888888,
+      "first_name": "管",
+      "last_name": "理",
+      "username": "bestadmin",
+      "type": "private"
+    },
+    "date": 1700120929,
+    "forward_from_chat": {
+      "id": -1066666666666,
+      "title": "目標群組",
+      "username": "anygroup",
+      "type": "supergroup"
+    },
+    "forward_date": 1700120864,
+    "video": {
+      "duration": 30,
+      "width": 400,
+      "height": 800,
+      "file_name": "11111111111111111.mp4",
+      "mime_type": "video/mp4",
+      "thumbnail": {
+        "file_id": "memememmemememmememememmemememememmememememmemememmemememmeme",
+        "file_unique_id": "AAAAAAAAAAAAA",
+        "file_size": 8000,
+        "width": 200,
+        "height": 400
+      },
+      "thumb": {
+        "file_id": "memememmemememmememememmemememememmememememmemememmemememmeme",
+        "file_unique_id": "AAAAAAAAAAAAA",
+        "file_size": 8000,
+        "width": 200,
+        "height": 400
+      },
+      "file_id": "memememmemememmememememmemememememmememememmemememmemememmeme",
+      "file_unique_id": "AAAAAAAAAAAAA",
+      "file_size": 800000
+    },
+    "caption": "這個是視頻的描述信息，是一段文字"
+  },
+  // 單圖片
+  {
+    "message_id": 87,
+    "from": {
+      "id": 8888888888,
+      "is_bot": false,
+      "first_name": "管",
+      "last_name": "理",
+      "username": "bestadmin",
+      "language_code": "zh-hans",
+      "is_premium": true
+    },
+    "chat": {
+      "id": 8888888888,
+      "first_name": "管",
+      "last_name": "理",
+      "username": "bestadmin",
+      "type": "private"
+    },
+    "date": 1700121196,
+    "photo": [{
+        "file_id": "memememmemememmememememmemememememmememememmemememmemememmeme",
+        "file_unique_id": "AAAAAAAAAAAAA",
+        "file_size": 1215,
+        "width": 90,
+        "height": 51
+      },
+      {
+        "file_id": "memememmemememmememememmemememememmememememmemememmemememmeme",
+        "file_unique_id": "AAAAAAAAAAAAA",
+        "file_size": 15499,
+        "width": 320,
+        "height": 182
+      },
+      {
+        "file_id": "memememmemememmememememmemememememmememememmemememmemememmeme",
+        "file_unique_id": "AAAAAAAAAAAAA",
+        "file_size": 55706,
+        "width": 800,
+        "height": 456
+      },
+      {
+        "file_id": "memememmemememmememememmemememememmememememmemememmemememmeme",
+        "file_unique_id": "AAAAAAAAAAAAA",
+        "file_size": 59888,
+        "width": 1166,
+        "height": 664
+      }
+    ],
+    "caption": "這是單張圖片的消息的樣子"
+  },
+  // 多圖片 1
+  {
+    "message_id": 93,
+    "from": {
+      "id": 8888888888,
+      "is_bot": false,
+      "first_name": "管",
+      "last_name": "理",
+      "username": "bestadmin",
+      "language_code": "zh-hans",
+      "is_premium": true
+    },
+    "chat": {
+      "id": 8888888888,
+      "first_name": "管",
+      "last_name": "理",
+      "username": "bestadmin",
+      "type": "private"
+    },
+    "date": 1700122748,
+    "media_group_id": "12333333333333333",
+    "photo": [{
+        "file_id": "memememmemememmememememmemememememmememememmemememmemememmeme",
+        "file_unique_id": "AAAAAAAAAAAAA",
+        "file_size": 1222,
+        "width": 54,
+        "height": 90
+      },
+      {
+        "file_id": "memememmemememmememememmemememememmememememmemememmemememmeme",
+        "file_unique_id": "AAAAAAAAAAAAA",
+        "file_size": 16777,
+        "width": 191,
+        "height": 320
+      },
+      {
+        "file_id": "memememmemememmememememmemememememmememememmemememmemememmeme",
+        "file_unique_id": "AAAAAAAAAAAAA",
+        "file_size": 65555,
+        "width": 478,
+        "height": 800
+      },
+      {
+        "file_id": "memememmemememmememememmemememememmememememmemememmemememmeme",
+        "file_unique_id": "AAAAAAAAAAAAA",
+        "file_size": 104444,
+        "width": 765,
+        "height": 1280
+      }
+    ],
+    "caption": "這是多圖片的第一張圖片",
+    "caption_entities": [{
+      "offset": 2,
+      "length": 3,
+      "type": "text_link",
+      "url": "https://www.google.com/"
+    }]
+  },
+  // 多圖片 2
+  {
+    "message_id": 94,
+    "from": {
+      "id": 8888888888,
+      "is_bot": false,
+      "first_name": "管",
+      "last_name": "理",
+      "username": "bestadmin",
+      "language_code": "zh-hans",
+      "is_premium": true
+    },
+    "chat": {
+      "id": 8888888888,
+      "first_name": "管",
+      "last_name": "理",
+      "username": "bestadmin",
+      "type": "private"
+    },
+    "date": 1700122748,
+    "media_group_id": "12333333333333333",
+    "photo": [{
+        "file_id": "memememmemememmememememmemememememmememememmemememmemememmeme",
+        "file_unique_id": "AAAAAAAAAAAAA",
+        "file_size": 1222,
+        "width": 54,
+        "height": 90
+      },
+      {
+        "file_id": "memememmemememmememememmemememememmememememmemememmemememmeme",
+        "file_unique_id": "AAAAAAAAAAAAA",
+        "file_size": 16333,
+        "width": 191,
+        "height": 320
+      },
+      {
+        "file_id": "memememmemememmememememmemememememmememememmemememmemememmeme",
+        "file_unique_id": "AAAAAAAAAAAAA",
+        "file_size": 65656,
+        "width": 478,
+        "height": 800
+      },
+      {
+        "file_id": "memememmemememmememememmemememememmememememmemememmemememmeme",
+        "file_unique_id": "AAAAAAAAAAAAA",
+        "file_size": 104567,
+        "width": 765,
+        "height": 1280
+      }
+    ],
+  },
+  // 圖片視頻混合（2p1v）
+  {
+    "message_id": 101,
+    "from": {
+      "id": 8888888888,
+      "is_bot": false,
+      "first_name": "管",
+      "last_name": "理",
+      "username": "bestadmin",
+      "language_code": "zh-hans",
+      "is_premium": true
+    },
+    "chat": {
+      "id": 8888888888,
+      "first_name": "管",
+      "last_name": "理",
+      "username": "bestadmin",
+      "type": "private"
+    },
+    "date": 1700125024,
+    "forward_from_chat": {
+      "id": -1066666666666,
+      "title": "任意群組",
+      "username": "anygroup",
+      "type": "supergroup"
+    },
+    "forward_date": 1699941942,
+    "media_group_id": "12444444444444444",
+    "photo": [{
+        "file_id": "memememmemememmememememmemememememmememememmemememmemememmeme",
+        "file_unique_id": "AAAAAAAAAAAAA",
+        "file_size": 1222,
+        "width": 54,
+        "height": 90
+      },
+      {
+        "file_id": "memememmemememmememememmemememememmememememmemememmemememmeme",
+        "file_unique_id": "AAAAAAAAAAAAA",
+        "file_size": 16333,
+        "width": 191,
+        "height": 320
+      },
+      {
+        "file_id": "memememmemememmememememmemememememmememememmemememmemememmeme",
+        "file_unique_id": "AAAAAAAAAAAAA",
+        "file_size": 65656,
+        "width": 478,
+        "height": 800
+      },
+      {
+        "file_id": "memememmemememmememememmemememememmememememmemememmemememmeme",
+        "file_unique_id": "AAAAAAAAAAAAA",
+        "file_size": 104321,
+        "width": 765,
+        "height": 1280
+      }
+    ],
+    "caption": "圖片視頻混合的第一張圖片"
+  },
+  {
+    "message_id": 102,
+    "from": {
+      "id": 8888888888,
+      "is_bot": false,
+      "first_name": "管",
+      "last_name": "理",
+      "username": "bestadmin",
+      "language_code": "zh-hans",
+      "is_premium": true
+    },
+    "chat": {
+      "id": 8888888888,
+      "first_name": "管",
+      "last_name": "理",
+      "username": "bestadmin",
+      "type": "private"
+    },
+    "date": 1700125024,
+    "forward_from_chat": {
+      "id": -1066666666666,
+      "title": "任意群組",
+      "username": "anygroup",
+      "type": "supergroup"
+    },
+    "forward_date": 1699941942,
+    "media_group_id": "12444444444444444",
+    "photo": [{
+        "file_id": "memememmemememmememememmemememememmememememmemememmemememmeme",
+        "file_unique_id": "AAAAAAAAAAAAA",
+        "file_size": 1222,
+        "width": 54,
+        "height": 90
+      },
+      {
+        "file_id": "memememmemememmememememmemememememmememememmemememmemememmeme",
+        "file_unique_id": "AAAAAAAAAAAAA",
+        "file_size": 16333,
+        "width": 191,
+        "height": 320
+      },
+      {
+        "file_id": "memememmemememmememememmemememememmememememmemememmemememmeme",
+        "file_unique_id": "AAAAAAAAAAAAA",
+        "file_size": 65656,
+        "width": 478,
+        "height": 800
+      },
+      {
+        "file_id": "memememmemememmememememmemememememmememememmemememmemememmeme",
+        "file_unique_id": "AAAAAAAAAAAAA",
+        "file_size": 104444,
+        "width": 765,
+        "height": 1280
+      }
+    ],
+  },
+  {
+    "message_id": 103,
+    "from": {
+      "id": 8888888888,
+      "is_bot": false,
+      "first_name": "管",
+      "last_name": "理",
+      "username": "bestadmin",
+      "language_code": "zh-hans",
+      "is_premium": true
+    },
+    "chat": {
+      "id": 8888888888,
+      "first_name": "管",
+      "last_name": "理",
+      "username": "bestadmin",
+      "type": "private"
+    },
+    "date": 1700125024,
+    "forward_from_chat": {
+      "id": -1066666666666,
+      "title": "任意群組",
+      "username": "anygroup",
+      "type": "supergroup"
+    },
+    "forward_date": 1699941942,
+    "media_group_id": "12444444444444444",
+    "video": {
+      "duration": 1086,
+      "width": 1280,
+      "height": 720,
+      "file_name": "4444444444.mp4",
+      "mime_type": "video/mp4",
+      "thumbnail": {
+        "file_id": "memememmemememmememememmemememememmememememmemememmemememmeme",
+        "file_unique_id": "AAAAAAAAAAAAA",
+        "file_size": 8888,
+        "width": 320,
+        "height": 180
+      },
+      "thumb": {
+        "file_id": "memememmemememmememememmemememememmememememmemememmemememmeme",
+        "file_unique_id": "AAAAAAAAAAAAA",
+        "file_size": 8888,
+        "width": 320,
+        "height": 180
+      },
+      "file_id": "memememmemememmememememmemememememmememememmemememmemememmeme",
+      "file_unique_id": "AAAAAAAAAAAAA",
+      "file_size": 81234567
+    }
+  }
+]

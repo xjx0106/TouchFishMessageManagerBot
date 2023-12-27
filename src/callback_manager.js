@@ -3,32 +3,23 @@ const {
   getData,
   saveData,
 } = require("../utils/index");
+const {
+  scheduleTimeLine
+} = require("../src/time_manager");
+const {
+  GOD_ID
+} = require("../config.js");
 
 
-module.exports = bot.on("callback_query", onLoveText = (msg) => {
+module.exports = bot.on("callback_query", onLoveText = async (msg) => {
   const {
     data
   } = msg;
-  if (data.split("-")[0] === "del") {
-    deleteMsg(msg);
+  await bot.deleteMessage(GOD_ID, msg.message.message_id);
+  if (data.startsWith("TimeLine-")) {
+    const param = data.replace("TimeLine-", "");
+    scheduleTimeLine(param);
+  } else {
+    console.log("不是正常的指令");
   }
 });
-
-/**
- * 從聊天和計劃表裏删除消息
- * @param {Object} msg 
- */
-const deleteMsg = async (msg) => {
-  const message_id_str = msg.data.split("-")[1];
-  const message_id = parseInt(message_id_str);
-
-  const fullList = getData("list");
-  const one = fullList.find(item => item.message_id === message_id);
-  if (one) {
-    await bot.deleteMessage(one.chat_id, one.message_id);
-    bot.deleteMessage(one.chat_id, one.console_message_id);
-
-    const newList = fullList.filter(item => item.message_id !== message_id);
-    saveData(newList, "list");
-  }
-}
