@@ -12,7 +12,7 @@ const dayjs = require("dayjs");
 
 /**
  * 為剩餘的消息排期(callback)
- * @param {string} method 排序方式 "rest" || "cover" || "look"
+ * @param {string} method 排序方式 "rest" || "cover" || "cancel"
  */
 const scheduleTimeLine = async (method) => {
   console.log("[scheduleTimeLine]->", method);
@@ -53,22 +53,18 @@ const scheduleTimeLine = async (method) => {
           const time = generateRdmTime(prevTime);
           item.time = time;
         }
+      } else if (method === "cancel") {
+        item.time = null;
       }
     });
-    if (method === "rest" || method === "cover") {
-      saveData(timeline, "timeline");
-    }
+    saveData(timeline, "timeline");
   } else {
     console.log("timeline has no length");
   }
-  if (method === "look") {
-    sendSchedule(timeline);
-  } else {
-    const res = await bot.sendMessage(GOD_ID, "已計劃！(5s后銷毀)");
-    setTimeout(() => {
-      bot.deleteMessage(GOD_ID, res.message_id);
-    }, 5000);
-  }
+  const res = await bot.sendMessage(GOD_ID, "計劃完成！");
+  setTimeout(() => {
+    bot.deleteMessage(GOD_ID, res.message_id);
+  }, 10000);
 };
 
 /**
@@ -85,7 +81,9 @@ const sendSchedule = async (timeline = null) => {
   }
   const countScheduled = _timeline.filter(item => item.time).length;
   const countUnScheduled = _timeline.filter(item => !item.time).length;
-  const status = "當前隊列共有 " + _timeline.length + " 條\n" + "已計劃：" + countScheduled + " 條，未計劃：" + countUnScheduled + " 條\n\n";
+
+  const runningStatus = timer ? "隊列狀態：運行 🟢\n\n" : "隊列狀態：暫停 🔴\n\n";
+  const scheduleStatus = "當前隊列裏共有 " + _timeline.length + " 條消息。\n" + "已計劃：" + countScheduled + " 條，未計劃：" + countUnScheduled + " 條\n\n";
   const timeLineText = _timeline.map(item => {
     let formatTime = "";
     if (item.time) {
@@ -96,7 +94,7 @@ const sendSchedule = async (timeline = null) => {
     return formatTime;
   });
   // 發送計劃列表
-  const res = await bot.sendMessage(GOD_ID, status + "計劃列表：\n" + timeLineText.join("\n"));
+  const res = await bot.sendMessage(GOD_ID, runningStatus + scheduleStatus + "計劃列表：\n" + timeLineText.join("\n"));
   setTimeout(() => {
     // 撤回計劃列表
     bot.deleteMessage(GOD_ID, res.message_id);
@@ -134,12 +132,17 @@ const countDownNext = async (sendFn = null) => {
   console.log("調用[倒計時下一條]");
   stopTimer();
 
-  console.log("計算下一條的時間");
-  const deltaTime = await getDeltaTime();
-  console.log("[距離下一條毫秒]->", deltaTime);
-  if (deltaTime) {
+  console.log("[計算下一條的時間]");
+  const nextTime = await getNextTime();
+  console.log("[下一條的時間]->", dayjs(nextTime).format("YYYY-MM-DD HH:mm:ss"));
+  if (nextTime) {
+    console.log("[開始計時!]");
+    const d = new Date();
+    const nowTime = d.getTime(); // now
+
+    const deltaTime = nextTime - nowTime;
     timer = setTimeout(() => {
-      console.log("時間到，準備調用發消息方法")
+      console.log("[時間到!] 準備調用發消息方法");
       sendFn && sendFn();
     }, deltaTime);
   } else {
@@ -151,7 +154,7 @@ const countDownNext = async (sendFn = null) => {
  * 發送隊首消息
  */
 const sendMsg = async () => {
-  console.log("開始發消息");
+  console.log("開始發消息... sendMsg()");
   const timeline = await getData("timeline");
 
   let sendRes = null;
@@ -222,25 +225,22 @@ const sendMsg = async () => {
 }
 
 /**
- * 計算此時距離下一條消息還有多少毫秒
- * @returns 返回需要倒計時多少毫，如果為0代表沒有下一條消息了
+ * 獲取下一條消息的發送時間
+ * @returns 返回獲取下一條消息的發送時間，如果為0代表沒有下一條消息了
  */
-const getDeltaTime = async () => {
-  let delta = 0;
-  const d = new Date();
-  const t = d.getTime(); // 此時
+const getNextTime = async () => {
+  let time = 0;
 
   const timeline = await getData("timeline");
   if (timeline.length) {
     const firstOne = timeline[0];
     const featureTime = firstOne.time;
 
-    const _delta = featureTime - t;
-    if (_delta > 0) {
-      delta = _delta;
+    if (firstOne && featureTime) {
+      time = featureTime;
     }
   }
-  return delta;
+  return time;
 }
 
 /**
@@ -277,33 +277,35 @@ module.exports = bot.onText(/\/stop/, onLoveText = async (msg) => {
 /**
  * 執行自動排期
  */
-module.exports = bot.onText(/\/timeline/, onLoveText = async (msg) => {
+module.exports = bot.onText(/\/manage/, onLoveText = async (msg) => {
   if (!checkPermission(msg)) {
     // 無權限，不做處理
     return;
   }
-  sendScheduleCommands(msg);
+  // 刪除指令
+  bot.deleteMessage(GOD_ID, msg.message_id);
+  sendScheduleCommands();
 });
 
 /**
- * 執行自動排期
+ * 發送計劃表
  */
-module.exports = bot.onText(/\/t/, onLoveText = async (msg) => {
+module.exports = bot.onText(/\/status/, onLoveText = async (msg) => {
   if (!checkPermission(msg)) {
     // 無權限，不做處理
     return;
   }
-  sendScheduleCommands(msg);
+  bot.deleteMessage(GOD_ID, msg.message_id);
+
+  sendSchedule(null);
 });
 
 /**
  * 發送排期的指令
- * @param {object} msg 用戶發送斜杠指令的那條消息
  */
-const sendScheduleCommands = (msg) => {
-  // 刪除指令
-  bot.deleteMessage(GOD_ID, msg.message_id);
-  bot.sendMessage(msg.chat.id, "选择要排序的模式", {
+const sendScheduleCommands = () => {
+
+  bot.sendMessage(GOD_ID, "选择要排序的模式", {
     parse_mode: "HTML",
     reply_markup: {
       inline_keyboard: [
@@ -315,16 +317,16 @@ const sendScheduleCommands = (msg) => {
             text: "Cover",
             callback_data: "TimeLine-cover"
           },
+          {
+            text: "Cancel",
+            callback_data: "TimeLine-cancel"
+          },
         ],
-        [{
-          text: "查看隊列",
-          callback_data: "TimeLine-look"
-        }, ],
       ],
     },
   });
 };
 
 module.exports = {
-  scheduleTimeLine
+  scheduleTimeLine // 導出給callback調用
 };

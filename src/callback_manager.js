@@ -11,11 +11,11 @@ const {
 } = require("../config.js");
 
 
-module.exports = bot.on("callback_query", onLoveText = async (msg) => {
+module.exports = bot.on("callback_query", onLoveText = (msg) => {
   const {
     data
   } = msg;
-  await bot.deleteMessage(GOD_ID, msg.message.message_id);
+  bot.deleteMessage(GOD_ID, msg.message.message_id);
   if (data.startsWith("TimeLine-")) {
     const param = data.replace("TimeLine-", "");
     scheduleTimeLine(param);

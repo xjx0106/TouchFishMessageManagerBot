@@ -136,19 +136,6 @@ const disposeBuffer = async () => {
  */
 const disposeBufferDebounce = debounce(disposeBuffer, 1100);
 
-module.exports = bot.onText(/\/copy/, onLoveText = async (msg) => {
-  if (!checkPermission(msg)) {
-    // 無權限，不做處理
-    return;
-  }
-  const originTest = msg.text + "";
-  const params = originTest.replace("/copy ", "").split(" ");
-  if (params[0]) {
-    const messageId = params[0];
-    bot.copyMessage(TARGET_GROUP_ID, GOD_ID, messageId);
-  }
-});
-
 module.exports = bot.on("message", onLoveText = async (msg) => {
   if (msg.text && msg.text.startsWith("/")) {
     // 機器人指令，不做處理
@@ -160,7 +147,6 @@ module.exports = bot.on("message", onLoveText = async (msg) => {
   }
   bufferList.push(msg);
   disposeBufferDebounce();
-
 });
 
 // /**
