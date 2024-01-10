@@ -76,8 +76,8 @@ const disposeMsg = async (msg, timeline) => {
           } // 單條媒體，直接放進去
         ],
         time: null,
-        caption: null,
-        caption_entities: null
+        caption: "",
+        caption_entities: []
       };
       if (msg.caption && msg.caption.length) {
         newMediaGroup.caption = msg.caption;
@@ -195,8 +195,8 @@ module.exports = bot.on("edited_message", onLoveText = async (msg) => {
     message_id,
     media_group_id,
     // 媒體類型的消息，修改則有以下兩項
-    caption = null,
-    caption_entities = null,
+    caption = '',
+    caption_entities = [],
     // // 純文字類型的消息，修改則有以下兩項
     // text = null,
     // entities = null,

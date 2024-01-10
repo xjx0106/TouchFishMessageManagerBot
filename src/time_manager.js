@@ -12,10 +12,13 @@ const dayjs = require("dayjs");
 
 /**
  * 為剩餘的消息排期(callback)
- * @param {string} method 排序方式 "rest" || "cover" || "cancel"
+ * @param {string} method 排序方式 "rest" || "cover" || "clear" || "cancel"
  */
 const scheduleTimeLine = async (method) => {
   console.log("[scheduleTimeLine]->", method);
+  if (method === "cancel") {
+    return;
+  }
   const timeline = await getData("timeline");
   if (timeline.length) {
     timeline.forEach((item, index) => {
@@ -53,7 +56,7 @@ const scheduleTimeLine = async (method) => {
           const time = generateRdmTime(prevTime);
           item.time = time;
         }
-      } else if (method === "cancel") {
+      } else if (method === "clear") {
         item.time = null;
       }
     });
@@ -107,8 +110,8 @@ const sendSchedule = async (timeline = null) => {
  * @returns 時間戳
  */
 const generateRdmTime = (timestamp) => {
-  const baseTime = 7 * 60 * 1000; // 5分鐘(ms) 基礎時間
-  const growRange = 4 * 60 * 1000; // 5分鐘(ms) 限定隨機範圍
+  const baseTime = 5 * 60 * 1000; // 5分鐘(ms) 基礎時間
+  const growRange = 7 * 60 * 1000; // 5分鐘(ms) 限定隨機範圍
 
   let result = 0;
   const addedTime = parseInt((Math.random() * growRange), 10); // 隨機的新增出來的時間（0~8分鐘(ms)）
@@ -176,8 +179,8 @@ const sendMsg = async () => {
         } = mediaItem;
         if (mediaIndex === 0) {
           const {
-            caption,
-            caption_entities
+            caption = "",
+              caption_entities = []
           } = one;
           mediaArr.push({
             type,
@@ -197,6 +200,7 @@ const sendMsg = async () => {
       // 刪除對話隊列裏的這條消息
       for (let i = 0; i < one.message_ids.length; i++) {
         const messageId = one.message_ids[i].msg_id;
+        // TODO: here have some problems in deleting msgs
         await bot.deleteMessage(GOD_ID, messageId);
       }
       // 刪除timeline裏的該消息數據
@@ -261,7 +265,13 @@ module.exports = bot.onText(/\/go/, onLoveText = async (msg) => {
     // 無權限，不做處理
     return;
   }
-  countDownNext(sendMsg);
+  bot.deleteMessage(GOD_ID, msg.message_id);
+  const res = await bot.sendMessage(GOD_ID, "隊列開始運行！🟢");
+  setTimeout(() => {
+    bot.deleteMessage(GOD_ID, res.message_id);
+  }, 6000);
+  await countDownNext(sendMsg);
+  sendSchedule();
 });
 /**
  * 停止運行隊列
@@ -271,7 +281,13 @@ module.exports = bot.onText(/\/stop/, onLoveText = async (msg) => {
     // 無權限，不做處理
     return;
   }
+  bot.deleteMessage(GOD_ID, msg.message_id);
+  const res = await bot.sendMessage(GOD_ID, "隊列停止運行！🔴");
+  setTimeout(() => {
+    bot.deleteMessage(GOD_ID, res.message_id);
+  }, 6000);
   stopTimer();
+  sendSchedule();
 });
 
 /**
@@ -310,18 +326,22 @@ const sendScheduleCommands = () => {
     reply_markup: {
       inline_keyboard: [
         [{
-            text: "Rest",
+            text: "餘量排期",
             callback_data: "TimeLine-rest"
           },
           {
-            text: "Cover",
+            text: "全量重排",
             callback_data: "TimeLine-cover"
           },
           {
-            text: "Cancel",
-            callback_data: "TimeLine-cancel"
+            text: "清除排期",
+            callback_data: "TimeLine-clear"
           },
         ],
+        [{
+          text: "取消",
+          callback_data: "TimeLine-cancel"
+        }]
       ],
     },
   });
