@@ -5,6 +5,12 @@ const {
   PROXY_URL,
 } = require("./config.js");
 
+// 定制的消息
+const {
+  copyMessages,
+  deleteMessages
+} = require("./utils/customize-function.js");
+
 const config = {
   polling: true,
 };
@@ -16,7 +22,12 @@ if (PROXY_URL) {
     }
   })
 }
-module.exports = new TelegramBot(TELEGRAM_BOT_TOKEN, config);
+
+const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, config);
+module.exports = Object.assign(bot, {
+  copyMessages,
+  deleteMessages
+});
 
 /// 功能類
 require("./src/message_manager");

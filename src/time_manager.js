@@ -110,8 +110,8 @@ const sendSchedule = async (timeline = null) => {
  * @returns 時間戳
  */
 const generateRdmTime = (timestamp) => {
-  const baseTime = 5 * 60 * 1000; // 5分鐘(ms) 基礎時間
-  const growRange = 7 * 60 * 1000; // 5分鐘(ms) 限定隨機範圍
+  const baseTime = 0.5 * 60 * 1000; // 5分鐘(ms) 基礎時間
+  const growRange = 0 * 60 * 1000; // 5分鐘(ms) 限定隨機範圍
 
   let result = 0;
   const addedTime = parseInt((Math.random() * growRange), 10); // 隨機的新增出來的時間（0~8分鐘(ms)）
@@ -168,40 +168,17 @@ const sendMsg = async () => {
     if (one.isGroupMedia) {
       // 是媒體組
       console.log("[是媒體組]");
-
-      // 整理一下媒體數據
-      const mediaArr = [];
-      const options = {};
-      one.message_ids.forEach((mediaItem, mediaIndex) => {
-        const {
-          type,
-          media
-        } = mediaItem;
-        if (mediaIndex === 0) {
-          const {
-            caption = "",
-              caption_entities = []
-          } = one;
-          mediaArr.push({
-            type,
-            media,
-            caption,
-            caption_entities
-          });
-        } else {
-          mediaArr.push({
-            type,
-            media
-          });
-        }
-      });
-      sendRes = await bot.sendMediaGroup(TARGET_GROUP_ID, mediaArr, options);
+      // 整理一下媒體數據（id列表）
+      const idList = one.message_ids.map(mediaItem => mediaItem.msg_id);
+      sendRes = await bot.copyMessages(TARGET_GROUP_ID, GOD_ID, idList);
+      console.log("[sendRes]->", sendRes);
       console.log("媒體組 發送完成，準備清理隊列首條");
       // 刪除對話隊列裏的這條消息
-      for (let i = 0; i < one.message_ids.length; i++) {
-        const messageId = one.message_ids[i].msg_id;
-        // TODO: here have some problems in deleting msgs
-        await bot.deleteMessage(GOD_ID, messageId);
+      try {
+        const delRes = await bot.deleteMessages(GOD_ID, idList);
+        console.log("[delRes]->", delRes);
+      } catch (e) {
+        console.log("error in deleting msg", e)
       }
       // 刪除timeline裏的該消息數據
       const timelineRest = timeline.filter((item, itemIdx) => itemIdx !== 0)
@@ -214,7 +191,12 @@ const sendMsg = async () => {
       sendRes = await bot.copyMessage(TARGET_GROUP_ID, GOD_ID, messageId);
       console.log("獨立媒體 發送完成，準備清理隊列首條");
       // 刪除對話隊列裏的這條消息
-      await bot.deleteMessage(GOD_ID, messageId);
+      try {
+        const delRes = await bot.deleteMessage(GOD_ID, messageId);
+        console.log("[delRes]->", delRes);
+      } catch (e) {
+        console.log("error in deleting msg", e)
+      }
       // 刪除timeline裏的該消息數據
       const timelineRest = timeline.filter((item, itemIdx) => itemIdx !== 0)
       saveData(timelineRest, "timeline");
