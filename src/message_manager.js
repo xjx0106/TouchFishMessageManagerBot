@@ -225,3 +225,23 @@ module.exports = bot.on("edited_message", onLoveText = async (msg) => {
     console.log("edit not group");
   }
 });
+
+/**
+ * 測試運行目標
+ */
+ module.exports = bot.onText(/\/test/, onLoveText = async (msg) => {
+  if (!checkPermission(msg)) {
+    // 無權限，不做處理
+    return;
+  }
+  bot.deleteMessage(GOD_ID, msg.message_id);
+
+  const res = await bot.sendMessage(GOD_ID, "機器人");
+  setTimeout(() => {
+    bot.deleteMessage(GOD_ID, res.message_id);
+  }, 3000);
+  const res2 = await bot.sendMessage(TARGET_GROUP_ID, "目標群組");
+  setTimeout(() => {
+    bot.deleteMessage(TARGET_GROUP_ID, res2.message_id);
+  }, 3000);
+});
