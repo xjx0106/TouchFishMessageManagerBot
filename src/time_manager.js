@@ -11,6 +11,15 @@ const {
 const dayjs = require("dayjs");
 
 /**
+ * 當前頁碼，起始於1
+ */
+let page = 1;
+/**
+ * 時間表的計時器
+ */
+let timer_status = null;
+
+/**
  * 為剩餘的消息排期(callback)
  * @param {string} method 排序方式 "rest" || "cover" || "clear" || "cancel"
  */
@@ -31,7 +40,7 @@ const scheduleTimeLine = async (method) => {
           if (index === 0) {
             // 自己就是隊首了
             const d = new Date();
-            const t = d.getTime();
+            const t = d.getTime(); // 此時
             const time = generateRdmTime(t);
             item.time = time;
           } else {
@@ -46,7 +55,7 @@ const scheduleTimeLine = async (method) => {
         if (index === 0) {
           // 自己就是隊首了
           const d = new Date();
-          const t = d.getTime();
+          const t = d.getTime(); // 此時
           const time = generateRdmTime(t);
           item.time = time;
         } else {
@@ -73,8 +82,15 @@ const scheduleTimeLine = async (method) => {
 /**
  * 發送計劃和狀態
  * @param {array} timeline 時間綫
+ * @param {number} messageId 要修改的消息
  */
-const sendSchedule = async (timeline = null) => {
+const sendSchedule = async (timeline = null, messageId = null) => {
+  clearTimeout(timer_status);
+  timer_status = null;
+
+  const PAGE_STAY_TIME = 10000;
+  const PAGE_SIZE = 20;
+
   let _timeline = [];
   // 先看看有沒有輸入timeline，若沒有，還要專門去獲取一下
   if (timeline) {
@@ -83,26 +99,136 @@ const sendSchedule = async (timeline = null) => {
     _timeline = await getData("timeline");
   }
   const countScheduled = _timeline.filter(item => item.time).length;
-  const countUnScheduled = _timeline.filter(item => !item.time).length;
+  const countScheduled_not = _timeline.filter(item => !item.time).length;
 
-  const runningStatus = timer ? "隊列狀態：運行 🟢\n\n" : "隊列狀態：暫停 🔴\n\n";
-  const scheduleStatus = "當前隊列裏共有 " + _timeline.length + " 條消息。\n" + "已計劃：" + countScheduled + " 條，未計劃：" + countUnScheduled + " 條\n\n";
+  const runningStatus = timer ? "隊列狀態：運行 🟢\n------------------------------------------------\n" : "隊列狀態：暫停 🔴\n------------------------------------------------\n";
+  const scheduleStatus =
+    "當前隊列裏共有 " +
+    _timeline.length +
+    " 條消息。\n" +
+    "已計劃：" +
+    countScheduled +
+    " 條，未計劃：" +
+    countScheduled_not +
+    " 條\n\n";
   const timeLineText = _timeline.map(item => {
     let formatTime = "";
     if (item.time) {
       formatTime = dayjs(item.time).format("YYYY-MM-DD HH:mm:ss");
+
+      const date = dayjs(item.time).format("YYYY-MM-DD");
+      const nowDate = dayjs().format("YYYY-MM-DD");
+      if (date === nowDate) {
+        formatTime += " 🔸";
+      }
     } else {
       formatTime = "未計劃"
     }
     return formatTime;
   });
-  // 發送計劃列表
-  const res = await bot.sendMessage(GOD_ID, runningStatus + scheduleStatus + "計劃列表：\n" + timeLineText.join("\n"));
-  setTimeout(() => {
-    // 撤回計劃列表
-    bot.deleteMessage(GOD_ID, res.message_id);
-  }, 20000);
+
+  if (!messageId) {
+    page = 1;
+  }
+
+  const pageStartIndex = (page - 1) * PAGE_SIZE;
+  const pageEndIndex = (page) * PAGE_SIZE;
+  const timelineTextPaged = timeLineText.slice(pageStartIndex, pageEndIndex).map((item, idx) => '【' + ((pageStartIndex + idx + 1) < 10 ? '0' : '') + (pageStartIndex + idx + 1) + "】 " + item);
+  const pageInfo = "\n------------------------------------------------\n當前第【" + page + "】頁，共【" + Math.ceil(timeLineText.length / PAGE_SIZE) + "】頁";
+
+  const totalText = runningStatus + scheduleStatus + "計劃列表：\n" + timelineTextPaged.join("\n") + pageInfo;
+  if (!messageId) {
+    // 發送計劃列表
+    console.log("[發送計劃列表 first]->");
+    const res = await bot.sendMessage(GOD_ID, totalText, {
+      reply_markup: {
+        inline_keyboard: [
+          [{
+              text: "首页",
+              callback_data: "TimeLinePage-1"
+            },
+            {
+              text: "上一页",
+              callback_data: "TimeLinePage-prev"
+            },
+            {
+              text: "下一页",
+              callback_data: "TimeLinePage-next"
+            }
+          ]
+        ],
+      }
+    });
+    timer_status = setTimeout(() => {
+      // 撤回計劃列表
+      try {
+        bot.deleteMessage(GOD_ID, res.message_id);
+      } catch (error) {
+        console.log('cannot delete schedule')
+      }
+    }, PAGE_STAY_TIME);
+  } else {
+    console.log("[edit計劃列表 first]->");
+    await bot.editMessageText(totalText, {
+      chat_id: GOD_ID,
+      message_id: messageId,
+      reply_markup: {
+        inline_keyboard: [
+          [{
+              text: "首页",
+              callback_data: "TimeLinePage-1"
+            },
+            {
+              text: "上一页",
+              callback_data: "TimeLinePage-prev"
+            },
+            {
+              text: "下一页",
+              callback_data: "TimeLinePage-next"
+            }
+          ]
+        ],
+      }
+    });
+    timer_status = setTimeout(() => {
+      // 撤回計劃列表
+      try {
+        bot.deleteMessage(GOD_ID, messageId);
+      } catch (error) {
+        console.log('cannot delete schedule')
+      }
+    }, PAGE_STAY_TIME);
+  }
 };
+
+/**
+ * 分頁發送時間表
+ * @param {array} timeline 時間表，可以不傳
+ * @param {string} opreation 操作符，有 prev | next | 1
+ * @param {number} messageId 要修改的消息的id
+ * 
+ */
+const pageSchedule = async (timeline = null, opreation, messageId) => {
+  if (opreation === "prev") {
+    page = page - 1;
+    if (page < 1) {
+      page = 1;
+      return;
+    } else {
+      sendSchedule(null, messageId);
+    }
+  } else if (opreation === "next") {
+    page = page + 1;
+    sendSchedule(null, messageId);
+  } else if (opreation === "1") {
+    if (page === 1) {
+      return;
+    } else {
+      page = 1;
+      sendSchedule(null, messageId);
+    }
+  }
+}
 
 /**
  * 生成一段隨機的時長
@@ -110,16 +236,83 @@ const sendSchedule = async (timeline = null) => {
  * @returns 時間戳
  */
 const generateRdmTime = (timestamp) => {
-  const baseTime = 0.5 * 60 * 1000; // 5分鐘(ms) 基礎時間
-  const growRange = 0 * 60 * 1000; // 5分鐘(ms) 限定隨機範圍
+  const baseDelta = 4 * 60 * 1000; // 基礎delta time時間
+  const maxGrow = 3 * 60 * 1000; // 最大再跳時間
+
+  const amStart = "09:30:00";
+  const amEnd = "12:00:00";
+  const pmStart = "14:00:00";
+  const pmEnd = "18:00:00";
 
   let result = 0;
-  const addedTime = parseInt((Math.random() * growRange), 10); // 隨機的新增出來的時間（0~8分鐘(ms)）
-  if (timestamp) {
-    result = baseTime + addedTime + timestamp;
-  } else {
-    result = baseTime + addedTime;
+
+  /**
+   * 根據一個時間戳生成下一個時間
+   * @param {number} timestampInput 根據的時間
+   * @returns 下一個時間戳
+   */
+  const goOnce = (timestampInput) => {
+    let res = 0;
+    const addedTime = parseInt((Math.random() * maxGrow), 10); // 隨機的新增出來的時間（總delta time）
+    res = timestampInput + baseDelta + addedTime;
+    return res;
   }
+
+  /**
+   * 校驗所生成的時間是否合法，返回檢查結果
+   * @param {number} timestampInput 要檢測的時間戳
+   * @returns 狀態
+   * 
+   * map:
+   * 1: 上午，上班前（太早）
+   * 2: 上午，工作時
+   * 3: 中午，午休時（午休）
+   * 4: 下午，工作時
+   * 5: 下午，下班後（下班了）
+   */
+  const checkTimeValid = timestampInput => {
+    const time = dayjs(timestampInput).format("HH:mm:ss");
+
+    const BEFORE_MORNING = 1;
+    const MORNING = 2;
+    const MIDDAY = 3;
+    const AFTERNOON = 4;
+    const AFTER_WORK = 5;
+
+    let status = null;
+    if (time < amStart) {
+      status = BEFORE_MORNING;
+    } else if (time >= amStart && time <= amEnd) {
+      status = MORNING;
+    } else if (time > amEnd && time < pmStart) {
+      status = MIDDAY;
+    } else if (time >= pmStart && time <= pmEnd) {
+      status = AFTERNOON;
+    } else if (time > pmEnd) {
+      status = AFTER_WORK;
+    } else {
+      status = 9999;
+    }
+    return status;
+  };
+
+  /**
+   * 生成時間并判斷，遞歸
+   */
+  const genTime = (genTimeInput = null) => {
+    let res = 0;
+    // 單次生成的結果
+    res = goOnce(genTimeInput);
+
+    const check = checkTimeValid(res);
+    if (check === 2 || check === 4) {
+      return res;
+    } else {
+      return genTime(res);
+    }
+  }
+
+  result = genTime(timestamp);
   return result;
 };
 
@@ -253,7 +446,6 @@ module.exports = bot.onText(/\/go/, onLoveText = async (msg) => {
     bot.deleteMessage(GOD_ID, res.message_id);
   }, 6000);
   await countDownNext(sendMsg);
-  sendSchedule();
 });
 /**
  * 停止運行隊列
@@ -269,7 +461,6 @@ module.exports = bot.onText(/\/stop/, onLoveText = async (msg) => {
     bot.deleteMessage(GOD_ID, res.message_id);
   }, 6000);
   stopTimer();
-  sendSchedule();
 });
 
 /**
@@ -295,7 +486,7 @@ module.exports = bot.onText(/\/status/, onLoveText = async (msg) => {
   }
   bot.deleteMessage(GOD_ID, msg.message_id);
 
-  sendSchedule(null);
+  sendSchedule(null, null);
 });
 
 /**
@@ -330,5 +521,6 @@ const sendScheduleCommands = () => {
 };
 
 module.exports = {
-  scheduleTimeLine // 導出給callback調用
+  scheduleTimeLine, // 導出給callback調用
+  pageSchedule // // 導出給callback調用
 };
