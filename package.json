@@ -11,7 +11,8 @@
     "dayjs": "^1.11.10",
     "fs": "0.0.1-security",
     "lodash": "^4.17.21",
-    "node-telegram-bot-api": "^0.59.0"
+    "node-telegram-bot-api": "^0.59.0",
+    "request": "^2.88.2"
   },
   "repository": {
     "type": "git",
