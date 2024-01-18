@@ -376,7 +376,7 @@ const sendMsg = async () => {
       console.log("媒體組 發送完成，準備清理隊列首條");
       // 刪除對話隊列裏的這條消息
       try {
-        const delRes = await bot.deleteMessages(GOD_ID, idList);
+        const delRes = await bot.deleteMessages(GOD_ID, messageIds);
         console.log("[delRes]->", delRes);
       } catch (e) {
         console.log("error in deleting msg", e)
