@@ -23,68 +23,38 @@ let msgList = [];
  * @param {object} msg telegram單條消息 
  * @param {array} timeline 現已獲取的依存的時間綫 
  */
-const disposeMsg = async (msg, timeline) => {
-  console.log("[disposeMsg]");
+const disposeSingleBufferMsg = async (msg, timeline) => {
+  console.log("[---處理單條消息（in buffer）]");
   const message_id = msg.message_id;
 
   if (msg.media_group_id) {
     // 媒體組（一次發送中，包括多張圖片或視頻混合）
-    let type = "";
-    let media = "";
-    if (msg.photo) {
-      type = "photo";
-      media = msg.photo[msg.photo.length - 1].file_id;
-    } else if (msg.video) {
-      type = "video";
-      media = msg.video.file_id;
-    }
-
     const lastMsg = msgList[msgList.length - 1]; // buffer最後一條隊列中的消息
     /**
      * 上一條消息是媒體組id（如果是媒體組，否則為""）
      */
     const lastMediaGroupId = lastMsg && lastMsg.isGroupMedia ? lastMsg.mediaGroupId : "";
-    console.log("[lastMediaGroupId]->", lastMediaGroupId);
+    console.log("[------最後一條是媒體組嗎]->", lastMediaGroupId);
     if (lastMediaGroupId === msg.media_group_id) {
-      console.log('1');
+      console.log('[---------[現有] 媒體組]');
       // 該文件還是最後一條媒體組裏的，所以推送入現有媒體組
       const newMediaItem = {
         msg_id: message_id,
-        type,
-        media
       };
       lastMsg.message_ids.push(newMediaItem);
-      console.log("[msg.caption]->", msg.caption);
-      console.log("[msg.caption_entities]->", msg.caption_entities);
-      if (msg.caption && msg.caption.length) {
-        lastMsg.caption = msg.caption
-      }
-      if (msg.caption_entities && msg.caption_entities.length) {
-        lastMsg.caption_entities = msg.caption_entities;
-      }
       msgList.splice(lastMsg.length - 1, 1, lastMsg);
     } else {
-      console.log('2');
+      console.log('[---------[新] 媒體組]');
       // 該文件是新的媒體組了，創建一個新的媒體組隊列消息
       const newMediaGroup = {
         isGroupMedia: true,
         mediaGroupId: msg.media_group_id,
         message_ids: [{
-            msg_id: message_id,
-            type,
-            media
+            msg_id: message_id
           } // 單條媒體，直接放進去
         ],
         time: null,
-        caption: "",
-        caption_entities: []
       };
-      if (msg.caption && msg.caption.length) {
-        newMediaGroup.caption = msg.caption;
-      }
-      if (msg.caption_entities && msg.caption_entities.length) {
-        newMediaGroup.caption_entities = msg.caption_entities;
-      }
 
       msgList.push(newMediaGroup);
     }
@@ -111,30 +81,28 @@ const disposeMsg = async (msg, timeline) => {
  * @description 儅一組消息接受完了，它是先存在bufferList裏，現在要慢慢整理到msgList裏，并且再存到timeline.json裏
  */
 const disposeBuffer = async () => {
-  console.log("[disposeBuffer]->");
+  console.log("======= 緩衝列表 開始處理 =======");
   const timeline = await getData('timeline');
-  console.log("[timeline]->", timeline.length);
   if (bufferList.length) {
-    console.log("buffer begin foreach");
     bufferList.forEach(msgItem => {
-      disposeMsg(msgItem, timeline);
+      disposeSingleBufferMsg(msgItem, timeline);
     });
-    // forEach結束后，經過一次或多次調用disposeMsg，已經完成了msgList（如果要覆蓋現有數據的尾條）
-    console.log("------- after ------------");
-    // console.log("[msgList]->", msgList);
+    // forEach結束后，經過一次或多次調用disposeSingleBufferMsg，已經完成了msgList（如果要覆蓋現有數據的尾條）
   } else {
     // no need to do anything
   }
+  console.log("======= 緩衝列表 處理完成 ok ====");
+  console.log("");
   bufferList = [];
   await saveData([...timeline, ...msgList], "timeline");
   setTimeout(async () => {
     msgList = [];
-  }, 800)
+  }, 1000)
 }
 /**
  * 防抖地處理Buffer
  */
-const disposeBufferDebounce = debounce(disposeBuffer, 1100);
+const disposeBufferDebounce = debounce(disposeBuffer, 1500);
 
 module.exports = bot.on("message", onLoveText = async (msg) => {
   if (msg.text && msg.text.startsWith("/")) {
@@ -229,7 +197,7 @@ module.exports = bot.on("edited_message", onLoveText = async (msg) => {
 /**
  * 測試運行目標
  */
- module.exports = bot.onText(/\/test/, onLoveText = async (msg) => {
+module.exports = bot.onText(/\/test/, onLoveText = async (msg) => {
   if (!checkPermission(msg)) {
     // 無權限，不做處理
     return;

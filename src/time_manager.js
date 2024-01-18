@@ -361,10 +361,9 @@ const sendMsg = async () => {
     if (one.isGroupMedia) {
       // 是媒體組
       console.log("[是媒體組]");
-      // 整理一下媒體數據（id列表）
-      const idList = one.message_ids.map(mediaItem => mediaItem.msg_id);
-      sendRes = await bot.copyMessages(TARGET_GROUP_ID, GOD_ID, idList);
-      console.log("[sendRes]->", sendRes);
+
+      const messageIds = one.message_ids.map(mediaItem => mediaItem.msg_id);
+      sendRes = await bot.copyMessages(TARGET_GROUP_ID, GOD_ID, messageIds);
       console.log("媒體組 發送完成，準備清理隊列首條");
       // 刪除對話隊列裏的這條消息
       try {
