@@ -88,7 +88,7 @@ const sendSchedule = async (timeline = null, messageId = null) => {
   clearTimeout(timer_status);
   timer_status = null;
 
-  const PAGE_STAY_TIME = 10000;
+  const PAGE_STAY_TIME = 25000;
   const PAGE_SIZE = 20;
 
   let _timeline = [];
@@ -101,7 +101,7 @@ const sendSchedule = async (timeline = null, messageId = null) => {
   const countScheduled = _timeline.filter(item => item.time).length;
   const countScheduled_not = _timeline.filter(item => !item.time).length;
 
-  const runningStatus = timer ? "隊列狀態：運行 🟢\n------------------------------------------------\n" : "隊列狀態：暫停 🔴\n------------------------------------------------\n";
+  const runningStatus = timer ? "隊列狀態：運行 🟢\n----------------------------------------\n" : "隊列狀態：暫停 🔴\n----------------------------------------\n";
   const scheduleStatus =
     "當前隊列裏共有 " +
     _timeline.length +
@@ -134,7 +134,7 @@ const sendSchedule = async (timeline = null, messageId = null) => {
   const pageStartIndex = (page - 1) * PAGE_SIZE;
   const pageEndIndex = (page) * PAGE_SIZE;
   const timelineTextPaged = timeLineText.slice(pageStartIndex, pageEndIndex).map((item, idx) => '【' + ((pageStartIndex + idx + 1) < 10 ? '0' : '') + (pageStartIndex + idx + 1) + "】 " + item);
-  const pageInfo = "\n------------------------------------------------\n當前第【" + page + "】頁，共【" + Math.ceil(timeLineText.length / PAGE_SIZE) + "】頁";
+  const pageInfo = "\n----------------------------------------\n當前第【" + page + "】頁，共【" + Math.ceil(timeLineText.length / PAGE_SIZE) + "】頁";
 
   const totalText = runningStatus + scheduleStatus + "計劃列表：\n" + timelineTextPaged.join("\n") + pageInfo;
   if (!messageId) {
@@ -239,7 +239,7 @@ const generateRdmTime = (timestamp) => {
   const baseDelta = 4 * 60 * 1000; // 基礎delta time時間
   const maxGrow = 3 * 60 * 1000; // 最大再跳時間
 
-  const amStart = "09:30:00";
+  const amStart = "09:35:00";
   const amEnd = "12:00:00";
   const pmStart = "14:00:00";
   const pmEnd = "18:00:00";
