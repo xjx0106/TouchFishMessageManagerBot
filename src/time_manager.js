@@ -20,6 +20,15 @@ let page = 1;
 let timer_status = null;
 
 /**
+ * 基礎delta time時間
+ */
+let baseDelta = 1; // 這裏給的默認值其實是沒用的，項目啓動后，會由setDeltaTime()方法來初始化
+/**
+ * 最大再跳時間
+ */
+let maxGrow = 0; // 這裏給的默認值其實是沒用的，項目啓動后，會由setDeltaTime()方法來初始化
+
+/**
  * 為剩餘的消息排期(callback)
  * @param {string} method 排序方式 "rest" || "cover" || "clear" || "cancel"
  */
@@ -88,7 +97,7 @@ const sendSchedule = async (timeline = null, messageId = null) => {
   clearTimeout(timer_status);
   timer_status = null;
 
-  const PAGE_STAY_TIME = 10000;
+  const PAGE_STAY_TIME = 25000;
   const PAGE_SIZE = 20;
 
   let _timeline = [];
@@ -101,7 +110,7 @@ const sendSchedule = async (timeline = null, messageId = null) => {
   const countScheduled = _timeline.filter(item => item.time).length;
   const countScheduled_not = _timeline.filter(item => !item.time).length;
 
-  const runningStatus = timer ? "隊列狀態：運行 🟢\n------------------------------------------------\n" : "隊列狀態：暫停 🔴\n------------------------------------------------\n";
+  const runningStatus = timer ? "隊列狀態：運行 🟢\n----------------------------------------\n" : "隊列狀態：暫停 🔴\n----------------------------------------\n";
   const scheduleStatus =
     "當前隊列裏共有 " +
     _timeline.length +
@@ -134,7 +143,7 @@ const sendSchedule = async (timeline = null, messageId = null) => {
   const pageStartIndex = (page - 1) * PAGE_SIZE;
   const pageEndIndex = (page) * PAGE_SIZE;
   const timelineTextPaged = timeLineText.slice(pageStartIndex, pageEndIndex).map((item, idx) => '【' + ((pageStartIndex + idx + 1) < 10 ? '0' : '') + (pageStartIndex + idx + 1) + "】 " + item);
-  const pageInfo = "\n------------------------------------------------\n當前第【" + page + "】頁，共【" + Math.ceil(timeLineText.length / PAGE_SIZE) + "】頁";
+  const pageInfo = "\n----------------------------------------\n當前第【" + page + "】頁，共【" + Math.ceil(timeLineText.length / PAGE_SIZE) + "】頁";
 
   const totalText = runningStatus + scheduleStatus + "計劃列表：\n" + timelineTextPaged.join("\n") + pageInfo;
   if (!messageId) {
@@ -236,10 +245,10 @@ const pageSchedule = async (timeline = null, opreation, messageId) => {
  * @returns 時間戳
  */
 const generateRdmTime = (timestamp) => {
-  const baseDelta = 4 * 60 * 1000; // 基礎delta time時間
-  const maxGrow = 3 * 60 * 1000; // 最大再跳時間
+  const _baseDelta = baseDelta * 60 * 1000; // 基礎delta time時間
+  const _maxGrow = maxGrow * 60 * 1000; // 最大再跳時間
 
-  const amStart = "09:30:00";
+  const amStart = "09:35:00";
   const amEnd = "12:00:00";
   const pmStart = "14:00:00";
   const pmEnd = "18:00:00";
@@ -253,8 +262,8 @@ const generateRdmTime = (timestamp) => {
    */
   const goOnce = (timestampInput) => {
     let res = 0;
-    const addedTime = parseInt((Math.random() * maxGrow), 10); // 隨機的新增出來的時間（總delta time）
-    res = timestampInput + baseDelta + addedTime;
+    const addedTime = parseInt((Math.random() * _maxGrow), 10); // 隨機的新增出來的時間（總delta time）
+    res = timestampInput + _baseDelta + addedTime;
     return res;
   }
 
@@ -361,14 +370,13 @@ const sendMsg = async () => {
     if (one.isGroupMedia) {
       // 是媒體組
       console.log("[是媒體組]");
-      // 整理一下媒體數據（id列表）
-      const idList = one.message_ids.map(mediaItem => mediaItem.msg_id);
-      sendRes = await bot.copyMessages(TARGET_GROUP_ID, GOD_ID, idList);
-      console.log("[sendRes]->", sendRes);
+
+      const messageIds = one.message_ids.map(mediaItem => mediaItem.msg_id);
+      sendRes = await bot.copyMessages(TARGET_GROUP_ID, GOD_ID, messageIds);
       console.log("媒體組 發送完成，準備清理隊列首條");
       // 刪除對話隊列裏的這條消息
       try {
-        const delRes = await bot.deleteMessages(GOD_ID, idList);
+        const delRes = await bot.deleteMessages(GOD_ID, messageIds);
         console.log("[delRes]->", delRes);
       } catch (e) {
         console.log("error in deleting msg", e)
@@ -433,6 +441,37 @@ const stopTimer = () => {
 }
 
 /**
+ * 設定全局時間間隔配置
+ * @param {object} config 新的時間配置。如果沒有，就從data裏取出來設定到全局，如果有，就保存並以此設定到全局
+ */
+const setDeltaTime = async (config = null) => {
+  let _data = null;
+  if (config) {
+    // 有config，就設定進去data
+    _data = config;
+    saveData(config, "config");
+  } else {
+    _data = await getData("config");
+  }
+
+  const {
+    baseDelta: _b,
+    maxGrow: _m
+  } = _data;
+
+  baseDelta = _b;
+  maxGrow = _m;
+
+  if (config) {
+    const text = `修改成功！\n\n基礎時間：${baseDelta}\n最大起跳：${maxGrow}`;
+    const res = await bot.sendMessage(GOD_ID, text);
+    setTimeout(() => {
+      bot.deleteMessage(GOD_ID, res.message_id);
+    }, 5000);
+  }
+};
+
+/**
  * 開始運行隊列
  */
 module.exports = bot.onText(/\/go/, onLoveText = async (msg) => {
@@ -490,10 +529,57 @@ module.exports = bot.onText(/\/status/, onLoveText = async (msg) => {
 });
 
 /**
+ * 設定時間間隔
+ */
+module.exports = bot.onText(/\/config/, onLoveText = async (msg) => {
+  if (!checkPermission(msg)) {
+    // 無權限，不做處理
+    return;
+  }
+  bot.deleteMessage(GOD_ID, msg.message_id);
+
+  const params = (msg.text + "").replace("/config", "").split(" ");
+  console.log("[params]->", params);
+  try {
+    if (params.length === 3) {
+      const p1 = Number(params[1]);
+      console.log("[p1]->", p1);
+      const p2 = Number(params[2]);
+      console.log("[p2]->", p2);
+
+      if (isNaN(p1) || isNaN(p2)) {
+        // 如果p1或p2不是數字
+        const res = await bot.sendMessage(GOD_ID, "config 參數不是數字!");
+        setTimeout(() => {
+          bot.deleteMessage(GOD_ID, res.message_id);
+        }, 5000);
+      } else {
+        setDeltaTime({
+          baseDelta: p1,
+          maxGrow: p2
+        });
+      }
+    } else if (params.length === 1) {
+      const text = `此時的參數是：\n\n基礎時間：${baseDelta}\n最大起跳：${maxGrow}`;
+      const res = await bot.sendMessage(GOD_ID, text);
+      setTimeout(() => {
+        bot.deleteMessage(GOD_ID, res.message_id);
+      }, 5000);
+    } else {
+      const res = await bot.sendMessage(GOD_ID, "config 參數數量不匹配!");
+      setTimeout(() => {
+        bot.deleteMessage(GOD_ID, res.message_id);
+      }, 5000);
+    }
+  } catch (error) {
+    console.log("[error in try, get params in config]->", error);
+  }
+});
+
+/**
  * 發送排期的指令
  */
 const sendScheduleCommands = () => {
-
   bot.sendMessage(GOD_ID, "选择要排序的模式", {
     parse_mode: "HTML",
     reply_markup: {
@@ -519,6 +605,8 @@ const sendScheduleCommands = () => {
     },
   });
 };
+
+setDeltaTime();
 
 module.exports = {
   scheduleTimeLine, // 導出給callback調用

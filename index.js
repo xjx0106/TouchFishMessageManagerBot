@@ -34,4 +34,10 @@ require("./src/message_manager");
 require("./src/time_manager");
 require("./src/callback_manager");
 
-console.log("[Bot Started!] ^_^");
+console.log("     ██████╗  ██████╗ ████████╗   ");
+console.log("     ██╔══██╗██╔═══██╗╚══██╔══╝   ");
+console.log("     ██████╔╝██║   ██║   ██║      ");
+console.log("     ██╔══██╗██║   ██║   ██║      ");
+console.log("     ██████╔╝╚██████╔╝   ██║      ");
+console.log("     ╚═════╝  ╚═════╝    ╚═╝      ");
+console.log("");

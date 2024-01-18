@@ -23,68 +23,38 @@ let msgList = [];
  * @param {object} msg telegram單條消息 
  * @param {array} timeline 現已獲取的依存的時間綫 
  */
-const disposeMsg = async (msg, timeline) => {
-  console.log("[disposeMsg]");
+const disposeSingleBufferMsg = async (msg, timeline) => {
+  console.log("[---處理單條消息（in buffer）]");
   const message_id = msg.message_id;
 
   if (msg.media_group_id) {
     // 媒體組（一次發送中，包括多張圖片或視頻混合）
-    let type = "";
-    let media = "";
-    if (msg.photo) {
-      type = "photo";
-      media = msg.photo[msg.photo.length - 1].file_id;
-    } else if (msg.video) {
-      type = "video";
-      media = msg.video.file_id;
-    }
-
     const lastMsg = msgList[msgList.length - 1]; // buffer最後一條隊列中的消息
     /**
      * 上一條消息是媒體組id（如果是媒體組，否則為""）
      */
     const lastMediaGroupId = lastMsg && lastMsg.isGroupMedia ? lastMsg.mediaGroupId : "";
-    console.log("[lastMediaGroupId]->", lastMediaGroupId);
+    console.log("[------最後一條是媒體組嗎]->", lastMediaGroupId);
     if (lastMediaGroupId === msg.media_group_id) {
-      console.log('1');
+      console.log('[---------[現有] 媒體組]');
       // 該文件還是最後一條媒體組裏的，所以推送入現有媒體組
       const newMediaItem = {
         msg_id: message_id,
-        type,
-        media
       };
       lastMsg.message_ids.push(newMediaItem);
-      console.log("[msg.caption]->", msg.caption);
-      console.log("[msg.caption_entities]->", msg.caption_entities);
-      if (msg.caption && msg.caption.length) {
-        lastMsg.caption = msg.caption
-      }
-      if (msg.caption_entities && msg.caption_entities.length) {
-        lastMsg.caption_entities = msg.caption_entities;
-      }
       msgList.splice(lastMsg.length - 1, 1, lastMsg);
     } else {
-      console.log('2');
+      console.log('[---------[新] 媒體組]');
       // 該文件是新的媒體組了，創建一個新的媒體組隊列消息
       const newMediaGroup = {
         isGroupMedia: true,
         mediaGroupId: msg.media_group_id,
         message_ids: [{
-            msg_id: message_id,
-            type,
-            media
+            msg_id: message_id
           } // 單條媒體，直接放進去
         ],
         time: null,
-        caption: "",
-        caption_entities: []
       };
-      if (msg.caption && msg.caption.length) {
-        newMediaGroup.caption = msg.caption;
-      }
-      if (msg.caption_entities && msg.caption_entities.length) {
-        newMediaGroup.caption_entities = msg.caption_entities;
-      }
 
       msgList.push(newMediaGroup);
     }
@@ -111,30 +81,28 @@ const disposeMsg = async (msg, timeline) => {
  * @description 儅一組消息接受完了，它是先存在bufferList裏，現在要慢慢整理到msgList裏，并且再存到timeline.json裏
  */
 const disposeBuffer = async () => {
-  console.log("[disposeBuffer]->");
+  console.log("======= 緩衝列表 開始處理 =======");
   const timeline = await getData('timeline');
-  console.log("[timeline]->", timeline.length);
   if (bufferList.length) {
-    console.log("buffer begin foreach");
     bufferList.forEach(msgItem => {
-      disposeMsg(msgItem, timeline);
+      disposeSingleBufferMsg(msgItem, timeline);
     });
-    // forEach結束后，經過一次或多次調用disposeMsg，已經完成了msgList（如果要覆蓋現有數據的尾條）
-    console.log("------- after ------------");
-    // console.log("[msgList]->", msgList);
+    // forEach結束后，經過一次或多次調用disposeSingleBufferMsg，已經完成了msgList（如果要覆蓋現有數據的尾條）
   } else {
     // no need to do anything
   }
+  console.log("======= 緩衝列表 處理完成 ok ====");
+  console.log("");
   bufferList = [];
   await saveData([...timeline, ...msgList], "timeline");
   setTimeout(async () => {
     msgList = [];
-  }, 800)
+  }, 1000)
 }
 /**
  * 防抖地處理Buffer
  */
-const disposeBufferDebounce = debounce(disposeBuffer, 1100);
+const disposeBufferDebounce = debounce(disposeBuffer, 1500);
 
 module.exports = bot.on("message", onLoveText = async (msg) => {
   if (msg.text && msg.text.startsWith("/")) {
@@ -181,55 +149,120 @@ module.exports = bot.on("message", onLoveText = async (msg) => {
 //   bot.sendMediaGroup(TARGET_GROUP_ID, mediaArr, options);
 // });
 
-module.exports = bot.on("edited_message", onLoveText = async (msg) => {
-  if (msg.text && msg.text.startsWith("/")) {
-    // 機器人指令，不做處理
-    return;
-  }
+module.exports = bot.onText(/\/del/, onLoveText = async (msg) => {
   if (!checkPermission(msg)) {
     // 無權限，不做處理
     return;
   }
-  const {
-    // 基礎信息
-    message_id,
-    media_group_id,
-    // 媒體類型的消息，修改則有以下兩項
-    caption = '',
-    caption_entities = [],
-    // // 純文字類型的消息，修改則有以下兩項
-    // text = null,
-    // entities = null,
-  } = msg;
+  bot.deleteMessage(GOD_ID, msg.message_id);
 
-  if (media_group_id && media_group_id.length) {
-    // 所修改的是媒體組類型的消息
-    console.log("edit is group")
-    const timeline = await getData('timeline') || [];
-    const one = timeline.find(item => item.mediaGroupId === media_group_id);
-    if (one) {
-      console.log("you one");
-      const index = timeline.indexOf(one);
-      console.log("[index]->", index);
-      one.caption = caption;
-      one.caption_entities = caption_entities;
-      console.log("[timeline]->", timeline);
-      timeline.splice(index, 1, one);
-      console.log("[timeline after]->", timeline);
-      saveData(timeline, "timeline");
+  if (msg.reply_to_message) {
+    // 
+    const {
+      reply_to_message
+    } = msg;
+    const {
+      message_id: message_id_to_be_delete // 要刪消息的id
+    } = reply_to_message;
+    console.log("[reply_to_message]->", reply_to_message);
+
+    const timeline = await getData("timeline");
+
+    let timelineIndex = null;
+    // 找出要刪除那條在timeline裏的index
+    timeline.forEach((item, index) => {
+      if (!item.isGroupMedia) {
+        // 單消息
+        if (item.message_id === message_id_to_be_delete) {
+          timelineIndex = index;
+        }
+      } else {
+        // 複合消息
+        if (item.message_ids.find(idsItm => idsItm.msg_id === message_id_to_be_delete)) {
+          timelineIndex = index;
+        }
+      }
+    });
+
+    console.log("[刪除 index of timeline]->", timelineIndex);
+
+    const item_to_be_del = timeline[timelineIndex];
+    if (!item_to_be_del.isGroupMedia) {
+      // 單消息
+      try {
+        const messageId = item_to_be_del.message_id;
+        const delRes = await bot.deleteMessage(GOD_ID, messageId);
+        console.log("[delRes]->", delRes);
+        timeline.splice(timelineIndex, 1);
+        saveData(timeline, "timeline");
+
+        // 如果刪不掉
+        let informText = "";
+        let opt = {};
+        if (delRes) {
+          // 刪掉了
+          informText = "數據已保存，隊列裏刪除也成功"
+        } else {
+          // 沒刪掉
+          informText = "數據已保存，隊列裏刪除沒成功，請手動刪除";
+          opt = {
+            reply_to_message_id: messageId
+          }
+        }
+        const res = await bot.sendMessage(GOD_ID, informText, opt);
+        setTimeout(() => {
+          if (delRes) {
+            bot.deleteMessage(GOD_ID, res.message_id);
+          }
+        }, 3000);
+
+      } catch (e) {
+        console.log("error in deleting msg", e)
+      }
     } else {
-      console.log('no one');
+      // 複合消息
+      try {
+        const messageIds = item_to_be_del.message_ids.map(mediaItem => mediaItem.msg_id);
+        const delRes = await bot.deleteMessages(GOD_ID, messageIds);
+        console.log("[delRes]->", delRes);
+        timeline.splice(timelineIndex, 1);
+        saveData(timeline, "timeline");
+
+        // 如果刪不掉
+        let informText = "";
+        let opt = {};
+        if (delRes) {
+          // 刪掉了
+          informText = "數據已保存，隊列裏刪除也成功"
+        } else {
+          // 沒刪掉
+          informText = "數據已保存，隊列裏刪除沒成功，請手動刪除";
+          opt = {
+            reply_to_message_id: messageIds[0]
+          }
+        }
+        const res = await bot.sendMessage(GOD_ID, informText, opt);
+        setTimeout(() => {
+          if (delRes) {
+            bot.deleteMessage(GOD_ID, res.message_id);
+          }
+        }, 3000);
+      } catch (e) {
+        console.log("error in deleting msgs", e)
+      }
     }
   } else {
-    // 所修改的是純文字、單媒體消息，不做處理（因爲是用copyMessage來實現的）
-    console.log("edit not group");
+    const res = await bot.sendMessage(GOD_ID, "沒選中要刪除的消息來回復");
+    setTimeout(() => {
+      bot.deleteMessage(GOD_ID, res.message_id);
+    }, 3000);
   }
 });
 
 /**
  * 測試運行目標
  */
- module.exports = bot.onText(/\/test/, onLoveText = async (msg) => {
+module.exports = bot.onText(/\/test/, onLoveText = async (msg) => {
   if (!checkPermission(msg)) {
     // 無權限，不做處理
     return;
