@@ -12,7 +12,7 @@ const baseUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
  * @param {Number} fromChatId 消息源頭群組的id
  * @param {Array} messageIds 消息組/媒體組的id
  * @returns Promise
- * see https://core.telegram.org/bots/api#copymessages
+ * @description see https://core.telegram.org/bots/api#copymessages
  */
 const copyMessages = (chatId, fromChatId, messageIds) => {
   const _path = "copyMessages";
@@ -47,7 +47,7 @@ const copyMessages = (chatId, fromChatId, messageIds) => {
  * @param {Number} chatId 目標群組的id
  * @param {Array} messageIds 要刪除的 消息組/媒體組的id
  * @returns Promise
- * see https://core.telegram.org/bots/api#deleteMessages
+ * @description see https://core.telegram.org/bots/api#deleteMessages
  */
 const deleteMessages = (chatId, messageIds) => {
   const _path = "deleteMessages";
