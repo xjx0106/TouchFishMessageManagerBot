@@ -149,6 +149,116 @@ module.exports = bot.on("message", onLoveText = async (msg) => {
 //   bot.sendMediaGroup(TARGET_GROUP_ID, mediaArr, options);
 // });
 
+module.exports = bot.onText(/\/del/, onLoveText = async (msg) => {
+  if (!checkPermission(msg)) {
+    // 無權限，不做處理
+    return;
+  }
+  bot.deleteMessage(GOD_ID, msg.message_id);
+
+  if (msg.reply_to_message) {
+    // 
+    const {
+      reply_to_message
+    } = msg;
+    const {
+      message_id: message_id_to_be_delete // 要刪消息的id
+    } = reply_to_message;
+    console.log("[reply_to_message]->", reply_to_message);
+
+    const timeline = await getData("timeline");
+
+    let timelineIndex = null;
+    // 找出要刪除那條在timeline裏的index
+    timeline.forEach((item, index) => {
+      if (!item.isGroupMedia) {
+        // 單消息
+        if (item.message_id === message_id_to_be_delete) {
+          timelineIndex = index;
+        }
+      } else {
+        // 複合消息
+        if (item.message_ids.find(idsItm => idsItm.msg_id === message_id_to_be_delete)) {
+          timelineIndex = index;
+        }
+      }
+    });
+
+    console.log("[刪除 index of timeline]->", timelineIndex);
+
+    const item_to_be_del = timeline[timelineIndex];
+    if (!item_to_be_del.isGroupMedia) {
+      // 單消息
+      try {
+        const messageId = item_to_be_del.message_id;
+        const delRes = await bot.deleteMessage(GOD_ID, messageId);
+        console.log("[delRes]->", delRes);
+        timeline.splice(timelineIndex, 1);
+        saveData(timeline, "timeline");
+
+        // 如果刪不掉
+        let informText = "";
+        let opt = {};
+        if (delRes) {
+          // 刪掉了
+          informText = "數據已保存，隊列裏刪除也成功"
+        } else {
+          // 沒刪掉
+          informText = "數據已保存，隊列裏刪除沒成功，請手動刪除";
+          opt = {
+            reply_to_message_id: messageId
+          }
+        }
+        const res = await bot.sendMessage(GOD_ID, informText, opt);
+        setTimeout(() => {
+          if (delRes) {
+            bot.deleteMessage(GOD_ID, res.message_id);
+          }
+        }, 3000);
+
+      } catch (e) {
+        console.log("error in deleting msg", e)
+      }
+    } else {
+      // 複合消息
+      try {
+        const messageIds = item_to_be_del.message_ids.map(mediaItem => mediaItem.msg_id);
+        const delRes = await bot.deleteMessages(GOD_ID, messageIds);
+        console.log("[delRes]->", delRes);
+        timeline.splice(timelineIndex, 1);
+        saveData(timeline, "timeline");
+
+        // 如果刪不掉
+        let informText = "";
+        let opt = {};
+        if (delRes) {
+          // 刪掉了
+          informText = "數據已保存，隊列裏刪除也成功"
+        } else {
+          // 沒刪掉
+          informText = "數據已保存，隊列裏刪除沒成功，請手動刪除";
+          opt = {
+            reply_to_message_id: messageIds[0]
+          }
+        }
+        const res = await bot.sendMessage(GOD_ID, informText, opt);
+        setTimeout(() => {
+          if (delRes) {
+            bot.deleteMessage(GOD_ID, res.message_id);
+          }
+        }, 3000);
+      } catch (e) {
+        console.log("error in deleting msgs", e)
+      }
+    }
+  } else {
+    const res = await bot.sendMessage(GOD_ID, "沒選中要刪除的消息來回復");
+    setTimeout(() => {
+      bot.deleteMessage(GOD_ID, res.message_id);
+    }, 3000);
+  }
+});
+
 /**
  * 測試運行目標
  */
