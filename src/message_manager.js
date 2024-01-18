@@ -149,51 +149,6 @@ module.exports = bot.on("message", onLoveText = async (msg) => {
 //   bot.sendMediaGroup(TARGET_GROUP_ID, mediaArr, options);
 // });
 
-module.exports = bot.on("edited_message", onLoveText = async (msg) => {
-  if (msg.text && msg.text.startsWith("/")) {
-    // 機器人指令，不做處理
-    return;
-  }
-  if (!checkPermission(msg)) {
-    // 無權限，不做處理
-    return;
-  }
-  const {
-    // 基礎信息
-    message_id,
-    media_group_id,
-    // 媒體類型的消息，修改則有以下兩項
-    caption = '',
-    caption_entities = [],
-    // // 純文字類型的消息，修改則有以下兩項
-    // text = null,
-    // entities = null,
-  } = msg;
-
-  if (media_group_id && media_group_id.length) {
-    // 所修改的是媒體組類型的消息
-    console.log("edit is group")
-    const timeline = await getData('timeline') || [];
-    const one = timeline.find(item => item.mediaGroupId === media_group_id);
-    if (one) {
-      console.log("you one");
-      const index = timeline.indexOf(one);
-      console.log("[index]->", index);
-      one.caption = caption;
-      one.caption_entities = caption_entities;
-      console.log("[timeline]->", timeline);
-      timeline.splice(index, 1, one);
-      console.log("[timeline after]->", timeline);
-      saveData(timeline, "timeline");
-    } else {
-      console.log('no one');
-    }
-  } else {
-    // 所修改的是純文字、單媒體消息，不做處理（因爲是用copyMessage來實現的）
-    console.log("edit not group");
-  }
-});
-
 /**
  * 測試運行目標
  */
