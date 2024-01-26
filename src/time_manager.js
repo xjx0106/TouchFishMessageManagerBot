@@ -610,5 +610,6 @@ setDeltaTime();
 
 module.exports = {
   scheduleTimeLine, // 導出給callback調用
-  pageSchedule // // 導出給callback調用
+  pageSchedule, // // 導出給callback調用
+  generateRdmTime
 };
