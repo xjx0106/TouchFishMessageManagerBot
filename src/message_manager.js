@@ -13,6 +13,10 @@ const {
   debounce,
   defer
 } = require("lodash");
+const {
+  generateRdmTime,
+  getAutoSpillingStatus
+} = require("./time_manager");
 
 
 let bufferList = [];
@@ -94,6 +98,48 @@ const disposeBuffer = async () => {
   console.log("======= 緩衝列表 處理完成 ok ====");
   console.log("");
   bufferList = [];
+
+  const _autoSpilling = getAutoSpillingStatus();
+  if (_autoSpilling) {
+    console.log("開始自動計算時間");
+    if (timeline.length) {
+      const lastItem = timeline[timeline.length - 1];
+      const lastTime = lastItem.time;
+
+      if (lastTime) {
+        // 正式時間綫有最後的時間，才有辦法繼續拼接
+        msgList.forEach((msgListItem, index) => {
+          if (index === 0) {
+            const time = generateRdmTime(lastTime);
+            msgListItem.time = time;
+          } else {
+            // 理論上不會到這裏，因爲目前msgList長度只會是1（單次轉發）
+            const prevItem = msgList[index - 1];
+            const prevTime = prevItem.time;
+            const time = generateRdmTime(prevTime);
+            msgListItem.time = time;
+          }
+        })
+      }
+
+    } else {
+      msgList.forEach((msgListItem, index) => {
+        if (index === 0) {
+          const d = new Date();
+          const t = d.getTime(); // 此時
+          const time = generateRdmTime(t);
+          msgListItem.time = time;
+        } else {
+          // 理論上不會到這裏，因爲目前msgList長度只會是1（單次轉發）
+          const prevItem = msgList[index - 1];
+          const prevTime = prevItem.time;
+          const time = generateRdmTime(prevTime);
+          item.time = time;
+        }
+      })
+    }
+    console.log("[結束自動計算時間]->", msgList);
+  }
   await saveData([...timeline, ...msgList], "timeline");
   setTimeout(async () => {
     msgList = [];

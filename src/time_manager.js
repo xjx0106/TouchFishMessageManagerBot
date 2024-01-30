@@ -27,6 +27,10 @@ let baseDelta = 1; // 這裏給的默認值其實是沒用的，項目啓動后�
  * 最大再跳時間
  */
 let maxGrow = 0; // 這裏給的默認值其實是沒用的，項目啓動后，會由setDeltaTime()方法來初始化
+/**
+ * 新消息的時間是否自動拼接上去
+ */
+let autoSpilling = false;
 
 /**
  * 為剩餘的消息排期(callback)
@@ -441,35 +445,43 @@ const stopTimer = () => {
 }
 
 /**
- * 設定全局時間間隔配置
- * @param {object} config 新的時間配置。如果沒有，就從data裏取出來設定到全局，如果有，就保存並以此設定到全局
+ * 設定全局配置
+ * @param {object} config 全局配置。如果沒有，就從data裏取出來設定到全局；如果有，就合并、保存、並以此設定到全局
  */
-const setDeltaTime = async (config = null) => {
-  let _data = null;
+const setConfig = async (config = null) => {
+  let _data = await getData("config");
   if (config) {
     // 有config，就設定進去data
-    _data = config;
-    saveData(config, "config");
-  } else {
-    _data = await getData("config");
+    Object.assign(_data, config)
+    saveData(_data, "config");
   }
 
   const {
     baseDelta: _b,
-    maxGrow: _m
+    maxGrow: _m,
+    autoSpilling: _a
   } = _data;
 
   baseDelta = _b;
   maxGrow = _m;
+  autoSpilling = _a;
 
   if (config) {
-    const text = `修改成功！\n\n基礎時間：${baseDelta}\n最大起跳：${maxGrow}`;
+    const text = `修改成功！\n\n基礎時間：${baseDelta}\n最大起跳：${maxGrow}\n時間自動拼接：${autoSpilling}`;
     const res = await bot.sendMessage(GOD_ID, text);
     setTimeout(() => {
       bot.deleteMessage(GOD_ID, res.message_id);
     }, 5000);
   }
 };
+
+/**
+ * 從time_manager取得自動拼接的狀態
+ * @returns 返回是否自動拼接的狀態
+ */
+const getAutoSpillingStatus = () => {
+  return autoSpilling;
+}
 
 /**
  * 開始運行隊列
@@ -531,14 +543,14 @@ module.exports = bot.onText(/\/status/, onLoveText = async (msg) => {
 /**
  * 設定時間間隔
  */
-module.exports = bot.onText(/\/config/, onLoveText = async (msg) => {
+module.exports = bot.onText(/\/time/, onLoveText = async (msg) => {
   if (!checkPermission(msg)) {
     // 無權限，不做處理
     return;
   }
   bot.deleteMessage(GOD_ID, msg.message_id);
 
-  const params = (msg.text + "").replace("/config", "").split(" ");
+  const params = (msg.text + "").replace("/time", "").split(" ");
   console.log("[params]->", params);
   try {
     if (params.length === 3) {
@@ -549,12 +561,12 @@ module.exports = bot.onText(/\/config/, onLoveText = async (msg) => {
 
       if (isNaN(p1) || isNaN(p2)) {
         // 如果p1或p2不是數字
-        const res = await bot.sendMessage(GOD_ID, "config 參數不是數字!");
+        const res = await bot.sendMessage(GOD_ID, "time 參數不是數字!");
         setTimeout(() => {
           bot.deleteMessage(GOD_ID, res.message_id);
         }, 5000);
       } else {
-        setDeltaTime({
+        setConfig({
           baseDelta: p1,
           maxGrow: p2
         });
@@ -566,13 +578,58 @@ module.exports = bot.onText(/\/config/, onLoveText = async (msg) => {
         bot.deleteMessage(GOD_ID, res.message_id);
       }, 5000);
     } else {
-      const res = await bot.sendMessage(GOD_ID, "config 參數數量不匹配!");
+      const res = await bot.sendMessage(GOD_ID, "time 參數數量不匹配!");
       setTimeout(() => {
         bot.deleteMessage(GOD_ID, res.message_id);
       }, 5000);
     }
   } catch (error) {
-    console.log("[error in try, get params in config]->", error);
+    console.log("[error in try, get params in time]->", error);
+  }
+});
+
+/**
+ * 設定時間是否自動拼接
+ */
+module.exports = bot.onText(/\/auto/, onLoveText = async (msg) => {
+  if (!checkPermission(msg)) {
+    // 無權限，不做處理
+    return;
+  }
+  bot.deleteMessage(GOD_ID, msg.message_id);
+
+  const params = (msg.text + "").replace("/auto", "").split(" ");
+  console.log("[params]->", params, params.length);
+  try {
+    if (params.length === 2) {
+      const p1 = JSON.parse(params[1]);
+      console.log("[p1]->", p1);
+
+      if (p1 !== true && p1 !== false) {
+        // 如果p1不是數字
+        const res = await bot.sendMessage(GOD_ID, "auto 參數不是true或false!");
+        setTimeout(() => {
+          bot.deleteMessage(GOD_ID, res.message_id);
+        }, 5000);
+      } else {
+        setConfig({
+          autoSpilling: p1
+        });
+      }
+    } else if (params.length === 1) {
+      const text = `此時的參數是：\n\n 是否自動拼接：${autoSpilling}`;
+      const res = await bot.sendMessage(GOD_ID, text);
+      setTimeout(() => {
+        bot.deleteMessage(GOD_ID, res.message_id);
+      }, 5000);
+    } else {
+      const res = await bot.sendMessage(GOD_ID, "time 參數數量不匹配!");
+      setTimeout(() => {
+        bot.deleteMessage(GOD_ID, res.message_id);
+      }, 5000);
+    }
+  } catch (error) {
+    console.log("[error in try, get params in auto]->", error);
   }
 });
 
@@ -606,9 +663,11 @@ const sendScheduleCommands = () => {
   });
 };
 
-setDeltaTime();
+setConfig();
 
 module.exports = {
   scheduleTimeLine, // 導出給callback調用
-  pageSchedule // // 導出給callback調用
+  pageSchedule, // // 導出給callback調用
+  generateRdmTime, // 導出給message_manager調用
+  getAutoSpillingStatus // 導出給message_manager使用
 };
