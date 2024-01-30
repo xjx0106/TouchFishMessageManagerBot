@@ -15,7 +15,7 @@ const {
 } = require("lodash");
 const {
   generateRdmTime,
-  autoSpilling
+  getAutoSpillingStatus
 } = require("./time_manager");
 
 
@@ -99,7 +99,8 @@ const disposeBuffer = async () => {
   console.log("");
   bufferList = [];
 
-  if (autoSpilling) {
+  const _autoSpilling = getAutoSpillingStatus();
+  if (_autoSpilling) {
     console.log("開始自動計算時間");
     if (timeline.length) {
       const lastItem = timeline[timeline.length - 1];

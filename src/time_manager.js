@@ -476,6 +476,14 @@ const setConfig = async (config = null) => {
 };
 
 /**
+ * 從time_manager取得自動拼接的狀態
+ * @returns 返回是否自動拼接的狀態
+ */
+const getAutoSpillingStatus = () => {
+  return autoSpilling;
+}
+
+/**
  * 開始運行隊列
  */
 module.exports = bot.onText(/\/go/, onLoveText = async (msg) => {
@@ -661,5 +669,5 @@ module.exports = {
   scheduleTimeLine, // 導出給callback調用
   pageSchedule, // // 導出給callback調用
   generateRdmTime, // 導出給message_manager調用
-  autoSpilling // 導出給message_manager使用
+  getAutoSpillingStatus // 導出給message_manager使用
 };
