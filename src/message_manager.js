@@ -15,7 +15,8 @@ const {
 } = require("lodash");
 const {
   generateRdmTime,
-  getAutoSpillingStatus
+  getAutoSpillingStatus,
+  countDownNext
 } = require("./time_manager");
 
 
@@ -297,8 +298,87 @@ module.exports = bot.onText(/\/del/, onLoveText = async (msg) => {
         console.log("error in deleting msgs", e)
       }
     }
+    countDownNext();
   } else {
     const res = await bot.sendMessage(GOD_ID, "沒選中要刪除的消息來回復");
+    setTimeout(() => {
+      bot.deleteMessage(GOD_ID, res.message_id);
+    }, 3000);
+  }
+});
+
+module.exports = bot.onText(/\/push/, onLoveText = async (msg) => {
+  if (!checkPermission(msg)) {
+    // 無權限，不做處理
+    return;
+  }
+  bot.deleteMessage(GOD_ID, msg.message_id);
+
+  if (msg.reply_to_message) {
+    // 
+    const {
+      reply_to_message
+    } = msg;
+    const {
+      message_id: message_id_to_be_delete // 要推送和刪除消息的id
+    } = reply_to_message;
+
+    const timeline = await getData("timeline");
+
+    let timelineIndex = null;
+    // 找出要要推送和刪除那條在timeline裏的index
+    timeline.forEach((item, index) => {
+      if (!item.isGroupMedia) {
+        // 單消息
+        if (item.message_id === message_id_to_be_delete) {
+          timelineIndex = index;
+        }
+      } else {
+        // 複合消息
+        if (item.message_ids.find(idsItm => idsItm.msg_id === message_id_to_be_delete)) {
+          timelineIndex = index;
+        }
+      }
+    });
+
+    const item_to_be_del = timeline[timelineIndex];
+    if (!item_to_be_del.isGroupMedia) {
+      // 單消息
+      try {
+        const messageId = item_to_be_del.message_id;
+        await bot.copyMessage(TARGET_GROUP_ID, GOD_ID, messageId);
+        await bot.deleteMessage(GOD_ID, messageId);
+        timeline.splice(timelineIndex, 1);
+        saveData(timeline, "timeline");
+
+        const res = await bot.sendMessage(GOD_ID, "已推送");
+        setTimeout(() => {
+          bot.deleteMessage(GOD_ID, res.message_id);
+        }, 3000);
+
+      } catch (e) {
+        console.log("error in push msg", e)
+      }
+    } else {
+      // 複合消息
+      try {
+        const messageIds = item_to_be_del.message_ids.map(mediaItem => mediaItem.msg_id);
+        await bot.copyMessages(TARGET_GROUP_ID, GOD_ID, messageIds);
+        await bot.deleteMessages(GOD_ID, messageIds);
+        timeline.splice(timelineIndex, 1);
+        saveData(timeline, "timeline");
+
+        const res = await bot.sendMessage(GOD_ID, "已推送");
+        setTimeout(() => {
+          bot.deleteMessage(GOD_ID, res.message_id);
+        }, 3000);
+      } catch (e) {
+        console.log("error in push msgs", e)
+      }
+    }
+    countDownNext();
+  } else {
+    const res = await bot.sendMessage(GOD_ID, "沒選中要插隊的消息來回復");
     setTimeout(() => {
       bot.deleteMessage(GOD_ID, res.message_id);
     }, 3000);
