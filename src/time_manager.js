@@ -346,7 +346,7 @@ let timer = null;
  * 倒計時下一條
  * @param {function} function 回調函數，發送消息
  */
-const countDownNext = async (sendFn = null) => {
+const countDownNext = async () => {
   console.log("調用[倒計時下一條]");
   stopTimer();
 
@@ -361,7 +361,7 @@ const countDownNext = async (sendFn = null) => {
     const deltaTime = nextTime - nowTime;
     timer = setTimeout(() => {
       console.log("[時間到!] 準備調用發消息方法");
-      sendFn && sendFn();
+      sendMsg();
     }, deltaTime);
   } else {
     stopTimer();
@@ -417,10 +417,11 @@ const sendMsg = async () => {
     }
     if (sendRes) {
       // 發完了就繼續倒計時下一條消息
-      countDownNext(sendMsg);
+      countDownNext();
     }
   } else {
-    console.log("[無法獲取首條消息]->");
+    console.log("[無法獲取首條消息]->因爲隊列無長度");
+    stopTimer();
   }
 }
 
@@ -505,7 +506,7 @@ module.exports = bot.onText(/\/go/, onLoveText = async (msg) => {
   setTimeout(() => {
     bot.deleteMessage(GOD_ID, res.message_id);
   }, 6000);
-  await countDownNext(sendMsg);
+  await countDownNext();
 });
 /**
  * 停止運行隊列
@@ -678,5 +679,6 @@ module.exports = {
   scheduleTimeLine, // 導出給callback調用
   pageSchedule, // // 導出給callback調用
   generateRdmTime, // 導出給message_manager調用
-  getAutoSpillingStatus // 導出給message_manager使用
+  getAutoSpillingStatus, // 導出給message_manager使用
+  countDownNext // 導出給message_manager使用
 };

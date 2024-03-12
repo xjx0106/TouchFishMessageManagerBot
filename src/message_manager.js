@@ -15,7 +15,8 @@ const {
 } = require("lodash");
 const {
   generateRdmTime,
-  getAutoSpillingStatus
+  getAutoSpillingStatus,
+  countDownNext
 } = require("./time_manager");
 
 
@@ -297,6 +298,7 @@ module.exports = bot.onText(/\/del/, onLoveText = async (msg) => {
         console.log("error in deleting msgs", e)
       }
     }
+    countDownNext();
   } else {
     const res = await bot.sendMessage(GOD_ID, "沒選中要刪除的消息來回復");
     setTimeout(() => {
@@ -374,6 +376,7 @@ module.exports = bot.onText(/\/push/, onLoveText = async (msg) => {
         console.log("error in push msgs", e)
       }
     }
+    countDownNext();
   } else {
     const res = await bot.sendMessage(GOD_ID, "沒選中要插隊的消息來回復");
     setTimeout(() => {
