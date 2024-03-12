@@ -282,30 +282,39 @@ const generateRdmTime = (timestamp) => {
    * 3: 中午，午休時（午休）
    * 4: 下午，工作時
    * 5: 下午，下班後（下班了）
+   * 6: 双休日
    */
   const checkTimeValid = timestampInput => {
     const time = dayjs(timestampInput).format("HH:mm:ss");
+    const weekDay = dayjs(timestampInput).day();
 
     const BEFORE_MORNING = 1;
     const MORNING = 2;
     const MIDDAY = 3;
     const AFTERNOON = 4;
     const AFTER_WORK = 5;
+    const NOT_WEEKDAY = 6;
 
     let status = null;
-    if (time < amStart) {
-      status = BEFORE_MORNING;
-    } else if (time >= amStart && time <= amEnd) {
-      status = MORNING;
-    } else if (time > amEnd && time < pmStart) {
-      status = MIDDAY;
-    } else if (time >= pmStart && time <= pmEnd) {
-      status = AFTERNOON;
-    } else if (time > pmEnd) {
-      status = AFTER_WORK;
+    if (weekDay === 0 || weekDay === 6) {
+      // sunday or saturday
+      status = NOT_WEEKDAY;
     } else {
-      status = 9999;
+      if (time < amStart) {
+        status = BEFORE_MORNING;
+      } else if (time >= amStart && time <= amEnd) {
+        status = MORNING;
+      } else if (time > amEnd && time < pmStart) {
+        status = MIDDAY;
+      } else if (time >= pmStart && time <= pmEnd) {
+        status = AFTERNOON;
+      } else if (time > pmEnd) {
+        status = AFTER_WORK;
+      } else {
+        status = 9999;
+      }
     }
+
     return status;
   };
 
